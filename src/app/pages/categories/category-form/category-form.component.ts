@@ -86,7 +86,7 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
       this.pageTitle = 'New category registration';
     } else {
       const categoryName = this.category.name || '';
-      this.pageTitle = 'Category Editing' + categoryName;
+      this.pageTitle = 'Category Editing ' + categoryName;
     }
   }
 
@@ -99,6 +99,12 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
     );
   }
   private updateCategory() {
+    const category: Category = Object.assign(new Category(), this.categoryForm.value);
+
+    this.categoryService.update(category).subscribe(
+      CategoryResponse => this.actionForSucess(CategoryResponse),
+      error => this.actionsForError(error)
+    );
   }
 
   // redirect / reload component page
@@ -109,8 +115,16 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
       () => this.router.navigate(['categories', category.id, 'edit'])
     );
   }
+
   private actionsForError(error: any): void {
-   
-  }
-  
+   this.toastr.error('Ocorreu um erro ao processar sua solicitação');
+   this.submittingForm = false;
+
+   if (error.status === 422) {
+    this.serverErrorMessages = JSON.parse(error._body).errors;
+  } else {
+    this.serverErrorMessages = ['Falha na comunicação com o servidor.'];
+    }
+   }
 }
+
