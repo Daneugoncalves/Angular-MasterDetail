@@ -5,7 +5,7 @@ import { CategoryService } from './../category-list/shared/category.service';
 import { Category } from './../category-list/shared/category.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
-
+import { ToastrService } from 'ngx-toastr';
 
 
 @Component({
@@ -27,6 +27,8 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
     private categoryService: CategoryService,
     private route: ActivatedRoute,
     private router: Router,
+    private toastr: ToastrService,
+
     private formBuilder: FormBuilder) { }
 
   ngOnInit() {
@@ -39,6 +41,14 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
     this.setPageTitle();
   }
 
+  submitForm() {
+    this.submittingForm = true;
+    if (this.currentAction === 'new') {
+    this.createCategory();
+    } else {
+      this.updateCategory();
+    }
+  }
   // PRIVATE METHODS
 
   private setCurrentAction() {
@@ -79,4 +89,28 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
       this.pageTitle = 'Category Editing' + categoryName;
     }
   }
+
+  private createCategory() {
+    const category: Category = Object.assign(new Category(), this.categoryForm.value);
+
+    this.categoryService.create(category).subscribe(
+      CategoryResponse => this.actionForSucess(CategoryResponse),
+      error => this.actionsForError(error)
+    );
+  }
+  private updateCategory() {
+  }
+
+  // redirect / reload component page
+  private actionForSucess(category: Category) {
+    this.toastr.success('Solicitação processada com sucesso!');
+
+    this.router.navigateByUrl('categories', {skipLocationChange: true}).then(
+      () => this.router.navigate(['categories', category.id, 'edit'])
+    );
+  }
+  private actionsForError(error: any): void {
+   
+  }
+  
 }
