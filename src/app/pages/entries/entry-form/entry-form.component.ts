@@ -1,30 +1,29 @@
 import { Component, OnInit, AfterContentChecked } from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 
-import { CategoryService } from './../category-list/shared/category.service';
-import { Category } from './../category-list/shared/category.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
-
+import { Entry } from '../shared/entry.model';
+import { EntryService } from '../shared/entrie.service';
 
 @Component({
-  selector: 'app-category-form',
-  templateUrl: './category-form.component.html',
-  styleUrls: ['./category-form.component.css']
+  selector: 'app-entry-form',
+  templateUrl: './entry-form.component.html',
+  styleUrls: ['./entry-form.component.css']
 })
-export class CategoryFormComponent implements OnInit, AfterContentChecked {
+export class EntryFormComponent implements OnInit, AfterContentChecked {
 
   currentAction: string;
-  categoryForm: FormGroup;
+  entryForm: FormGroup;
   pageTitle: string;
   serverErrorMessages: string[] = null;
   submittingForm = false;
 
-  category: Category = new Category();
+  entry: Entry = new Entry();
 
   constructor(
-    private categoryService: CategoryService,
+    private entryService: EntryService,
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
@@ -33,8 +32,8 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
 
   ngOnInit() {
     this.setCurrentAction();
-    this.buildCategoryForm();
-    this.loadCategory();
+    this.buildEntryForm();
+    this.loadEntry();
   }
 
   ngAfterContentChecked() {
@@ -44,9 +43,9 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
   submitForm() {
     this.submittingForm = true;
     if (this.currentAction === 'new') {
-    this.createCategory();
+    this.createEntry();
     } else {
-      this.updateCategory();
+      this.updateEntry();
     }
   }
   // PRIVATE METHODS
@@ -59,22 +58,27 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
      }
   }
 
-  private buildCategoryForm() {
-    this.categoryForm = this.formBuilder.group({
+  private buildEntryForm() {
+    this.entryForm = this.formBuilder.group({
       id: [null],
       name: [null, [Validators.required, Validators.minLength(2)]],
-      description: [null]
+      description: [null],
+      type: [null, [Validators.required]],
+      amount: [null, [Validators.required]],
+      data: [null, [Validators.required]],
+      paid: [null, [Validators.required]],
+      categoryId: [null, [Validators.required]]
     });
   }
 
-  private loadCategory() {
+  private loadEntry() {
     if (this.currentAction === 'edit') {
       this.route.paramMap.pipe(
-        switchMap(params => this.categoryService.getById(+params.get('id')))
+        switchMap(params => this.entryService.getById(+params.get('id')))
       ).subscribe(
-        (category) => {
-          this.category = category;
-          this.categoryForm.patchValue(category);
+        (entry) => {
+          this.entry = entry;
+          this.entryForm.patchValue(entry);
         },
         error => alert('Ops, an error has occurred')
       );
@@ -83,36 +87,36 @@ export class CategoryFormComponent implements OnInit, AfterContentChecked {
 
   private setPageTitle() {
     if (this.currentAction === 'new') {
-      this.pageTitle = 'New category registration';
+      this.pageTitle = 'New entry registration';
     } else {
-      const categoryName = this.category.name || '';
-      this.pageTitle = 'Category Editing ' + categoryName;
+      const entryName = this.entry.name || '';
+      this.pageTitle = 'Entry Editing ' + entryName;
     }
   }
 
-  private createCategory() {
-    const category: Category = Object.assign(new Category(), this.categoryForm.value);
+  private createEntry() {
+    const entry: Entry = Object.assign(new Entry(), this.entryForm.value);
 
-    this.categoryService.create(category).subscribe(
-      CategoryResponse => this.actionForSucess(CategoryResponse),
+    this.entryService.create(entry).subscribe(
+      EntryResponse => this.actionForSucess(EntryResponse),
       error => this.actionsForError(error)
     );
   }
-  private updateCategory() {
-    const category: Category = Object.assign(new Category(), this.categoryForm.value);
+  private updateEntry() {
+    const entry: Entry = Object.assign(new Entry(), this.entryForm.value);
 
-    this.categoryService.update(category).subscribe(
-      CategoryResponse => this.actionForSucess(CategoryResponse),
+    this.entryService.update(entry).subscribe(
+      EntryResponse => this.actionForSucess(EntryResponse),
       error => this.actionsForError(error)
     );
   }
 
   // redirect / reload component page
-  private actionForSucess(category: Category) {
+  private actionForSucess(entry: Entry) {
     this.toastr.success('Solicitação processada com sucesso!');
 
-    this.router.navigateByUrl('categories', {skipLocationChange: true}).then(
-      () => this.router.navigate(['categories', category.id, 'edit'])
+    this.router.navigateByUrl('entries', {skipLocationChange: true}).then(
+      () => this.router.navigate(['entries', entry.id, 'edit'])
     );
   }
 
